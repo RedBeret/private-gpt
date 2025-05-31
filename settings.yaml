@@ -18,7 +18,7 @@ server:
 
 data:
   local_ingestion:
-    enabled: ${LOCAL_INGESTION_ENABLED:false}
+    enabled: ${LOCAL_INGESTION_ENABLED:true}
     allow_ingest_from: ["*"]
   local_data_folder: local_data/private_gpt
 
@@ -92,7 +92,7 @@ embedding:
 
 huggingface:
   embedding_hf_model_name: nomic-ai/nomic-embed-text-v1.5
-  access_token: ${HF_TOKEN:}
+  access_token: ${HF_TOKEN:} # Reverted to load from environment
   # Warning: Enabling this option will allow the model to download and execute code from the internet.
   # Nomic AI requires this option to be enabled to use the model, be aware if you are using a different model.
   trust_remote_code: true
