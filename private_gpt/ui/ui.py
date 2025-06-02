@@ -25,6 +25,7 @@ from private_gpt.server.ingest.ingest_service import IngestService
 from private_gpt.server.recipes.summarize.summarize_service import SummarizeService
 from private_gpt.settings.settings import settings
 from private_gpt.ui.images import logo_svg
+from private_gpt.components.embedding.embedding_component import EmbeddingComponent
 
 logger = logging.getLogger(__name__)
 
@@ -365,6 +366,9 @@ class PrivateGptUi:
 
     def _build_ui_blocks(self) -> gr.Blocks:
         logger.debug("Creating the UI blocks")
+        # Get backend info from EmbeddingComponent
+        embedding_component = global_injector.get(EmbeddingComponent)
+        backend_info = getattr(embedding_component, "backend", "Unknown")
         with gr.Blocks(
             title=UI_TAB_TITLE,
             theme=gr.themes.Soft(primary_hue=slate),
@@ -387,10 +391,13 @@ class PrivateGptUi:
             ".footer { text-align: center; margin-top: 20px; font-size: 14px; display: flex; align-items: center; justify-content: center; }"
             ".footer-zylon-link { display:flex; margin-left: 5px; text-decoration: auto; color: var(--body-text-color); }"
             ".footer-zylon-link:hover { color: #C7BAFF; }"
-            ".footer-zylon-ico { height: 20px; margin-left: 5px; background-color: antiquewhite; border-radius: 2px; }",
+            ".footer-zylon-ico { height: 20px; margin-left: 5px; background-color: antiquewhite; border-radius: 2px; }"
+            ".backend-indicator { position: absolute; top: 10px; right: 20px; background: #eee; color: #333; padding: 4px 12px; border-radius: 8px; font-size: 13px; z-index: 1000; }",
         ) as blocks:
             with gr.Row():
                 gr.HTML(f"<div class='logo'/><img src={logo_svg} alt=PrivateGPT></div")
+                # Backend indicator (top right)
+                gr.HTML(f"<div class='backend-indicator'>Backend: {backend_info}</div>")
 
             with gr.Row(equal_height=False):
                 with gr.Column(scale=3):
@@ -586,4 +593,4 @@ if __name__ == "__main__":
     ui = global_injector.get(PrivateGptUi)
     _blocks = ui.get_ui_blocks()
     _blocks.queue()
-    _blocks.launch(debug=False, show_api=False)
+    _blocks.launch(debug=False, show_api=False, share=True)

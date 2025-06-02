@@ -15,11 +15,13 @@ watchdog = "^4.0.1"
 transformers = "^4.44.2"
 docx2txt = "^0.8"
 cryptography = "^3.1"
+
 # LlamaIndex core libs
-llama-index-core = ">=0.11.2,<0.12.0"
+llama-index-core = "~0.11.0"   # ← Downgraded to be compatible with llama-index-llms-llama-cpp 0.2.2
 llama-index-readers-file = "*"
-# Optional LlamaIndex integration libs
-llama-index-llms-llama-cpp = {version = "*", optional = true}
+
+# Optional LlamaIndex integration libs (unchanged)
+llama-index-llms-llama-cpp = {version = "*", optional = true} # This will likely pick 0.2.2
 llama-index-llms-openai = {version ="*", optional = true}
 llama-index-llms-openai-like = {version ="*", optional = true}
 llama-index-llms-ollama = {version ="*", optional = true}
@@ -38,6 +40,7 @@ llama-index-vector-stores-postgres = {version ="*", optional = true}
 llama-index-vector-stores-clickhouse = {version ="*", optional = true}
 llama-index-storage-docstore-postgres = {version ="*", optional = true}
 llama-index-storage-index-store-postgres = {version ="*", optional = true}
+
 # Postgres
 psycopg2-binary = {version ="^2.9.9", optional = true}
 asyncpg = {version="^0.29.0", optional = true}
@@ -61,9 +64,16 @@ einops = {version = "^0.8.0", optional = true}
 retry-async = "^0.1.4"
 huggingface-hub = "^0.32.3"
 
+# ─── New pins needed for the CUDA build ──────────────────────────────────────
+numpy = "^1.26,<2.0.0"            # ← This is correct, but was overridden by pip
+markupsafe = "~=2.0"              # ← This is correct, but was overridden by pip
+
+# Optional llama-cpp dependency
+llama-cpp-python = {version = "^0.2.32,<0.3.0", optional = true} # Correct for llama-index-llms-llama-cpp 0.2.2
+
 [tool.poetry.extras]
-ui = ["gradio", "ffmpy"]
-llms-llama-cpp = ["llama-index-llms-llama-cpp"]
+ui = ["gradio", "ffmpy", "torch"]
+llms-llama-cpp = ["llama-index-llms-llama-cpp", "llama-cpp-python"]  # ← added llama-cpp-python
 llms-openai = ["llama-index-llms-openai"]
 llms-openai-like = ["llama-index-llms-openai-like"]
 llms-ollama = ["llama-index-llms-ollama"]
@@ -78,7 +88,7 @@ embeddings-azopenai = ["llama-index-embeddings-azure-openai"]
 embeddings-gemini = ["llama-index-embeddings-gemini"]
 embeddings-mistral = ["llama-index-embeddings-mistralai"]
 vector-stores-qdrant = ["llama-index-vector-stores-qdrant"]
-vector-stores-clickhouse = ["llama-index-vector-stores-clickhouse", "clickhouse_connect"]
+vector-stores-clickhouse = ["llama-index-vector-stores-clickhouse", "clickhouse-connect"]  # ← fixed: hyphen not underscore
 vector-stores-chroma = ["llama-index-vector-stores-chroma"]
 vector-stores-postgres = ["llama-index-vector-stores-postgres"]
 vector-stores-milvus = ["llama-index-vector-stores-milvus"]

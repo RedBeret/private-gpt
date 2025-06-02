@@ -8,15 +8,27 @@ from private_gpt.settings.settings import Settings
 
 logger = logging.getLogger(__name__)
 
+# Add torch import for CUDA detection
+try:
+    import torch
+except ImportError:
+    torch = None
+
+def detect_backend() -> str:
+    if torch is not None and torch.cuda.is_available():
+        return f"GPU: {torch.cuda.get_device_name(0)}"
+    return "CPU"
 
 @singleton
 class EmbeddingComponent:
     embedding_model: BaseEmbedding
+    backend: str  # Store backend info for UI
 
     @inject
     def __init__(self, settings: Settings) -> None:
         embedding_mode = settings.embedding.mode
         logger.info("Initializing the embedding model in mode=%s", embedding_mode)
+        self.backend = "Unknown"
         match embedding_mode:
             case "huggingface":
                 try:
@@ -28,11 +40,21 @@ class EmbeddingComponent:
                         "Local dependencies not found, install with `poetry install --extras embeddings-huggingface`"
                     ) from e
 
+                self.backend = detect_backend()
                 self.embedding_model = HuggingFaceEmbedding(
                     model_name=settings.huggingface.embedding_hf_model_name,
                     cache_folder=str(models_cache_path),
                     trust_remote_code=settings.huggingface.trust_remote_code,
                 )
+                # Patch model and tokenizer to use CUDA if available
+                if torch is not None and torch.cuda.is_available():
+                    if hasattr(self.embedding_model, "_model") and hasattr(self.embedding_model._model, "to"):
+                        self.embedding_model._model = self.embedding_model._model.to("cuda")
+                    if hasattr(self.embedding_model, "_tokenizer") and hasattr(self.embedding_model._tokenizer, "to"):
+                        try:
+                            self.embedding_model._tokenizer = self.embedding_model._tokenizer.to("cuda")
+                        except Exception:
+                            pass  # Some tokenizers do not support .to()
             case "sagemaker":
                 try:
                     from private_gpt.components.embedding.custom.sagemaker import (
@@ -43,6 +65,7 @@ class EmbeddingComponent:
                         "Sagemaker dependencies not found, install with `poetry install --extras embeddings-sagemaker`"
                     ) from e
 
+                self.backend = "Sagemaker"
                 self.embedding_model = SagemakerEmbedding(
                     endpoint_name=settings.sagemaker.embedding_endpoint_name,
                 )
@@ -62,6 +85,7 @@ class EmbeddingComponent:
                 api_key = settings.openai.embedding_api_key or settings.openai.api_key
                 model = settings.openai.embedding_model
 
+                self.backend = "OpenAI"
                 self.embedding_model = OpenAIEmbedding(
                     api_base=api_base,
                     api_key=api_key,
@@ -87,6 +111,7 @@ class EmbeddingComponent:
                     else ollama_settings.embedding_model
                 )
 
+                self.backend = "Ollama"
                 self.embedding_model = OllamaEmbedding(
                     model_name=model_name,
                     base_url=ollama_settings.embedding_api_base,
@@ -123,6 +148,7 @@ class EmbeddingComponent:
                     ) from e
 
                 azopenai_settings = settings.azopenai
+                self.backend = "AzureOpenAI"
                 self.embedding_model = AzureOpenAIEmbedding(
                     model=azopenai_settings.embedding_model,
                     deployment_name=azopenai_settings.embedding_deployment_name,
@@ -140,6 +166,7 @@ class EmbeddingComponent:
                         "Gemini dependencies not found, install with `poetry install --extras embeddings-gemini`"
                     ) from e
 
+                self.backend = "Gemini"
                 self.embedding_model = GeminiEmbedding(
                     api_key=settings.gemini.api_key,
                     model_name=settings.gemini.embedding_model,
@@ -157,6 +184,7 @@ class EmbeddingComponent:
                 api_key = settings.openai.api_key
                 model = settings.openai.embedding_model
 
+                self.backend = "MistralAI"
                 self.embedding_model = MistralAIEmbedding(
                     api_key=api_key,
                     model=model,
@@ -164,4 +192,5 @@ class EmbeddingComponent:
             case "mock":
                 # Not a random number, is the dimensionality used by
                 # the default embedding model
+                self.backend = "Mock"
                 self.embedding_model = MockEmbedding(384)
