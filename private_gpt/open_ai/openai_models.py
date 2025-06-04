@@ -114,7 +114,7 @@ def to_openai_sse_stream(
     sources: list[Chunk] | None = None,
 ) -> Iterator[str]:
     for response in response_generator:
-        if isinstance(response, CompletionResponse | ChatResponse):
+        if isinstance(response, (CompletionResponse, ChatResponse)):
             yield f"data: {OpenAICompletion.json_from_delta(text=response.delta)}\n\n"
         else:
             yield f"data: {OpenAICompletion.json_from_delta(text=response, sources=sources)}\n\n"
