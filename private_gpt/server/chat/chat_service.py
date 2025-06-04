@@ -60,13 +60,11 @@ class ChatEngineInput:
             if len(messages) > 0 and messages[-1].role == MessageRole.USER
             else None
         )
-        # Remove from messages list the system message and last message,
-        # if they exist. The rest is the chat history.
-        if system_message:
-            messages.pop(0)
-        if last_message:
-            messages.pop(-1)
-        chat_history = messages if len(messages) > 0 else None
+        # Compute the chat history without mutating the original list.
+        start_index = 1 if system_message else 0
+        end_index = len(messages) - 1 if last_message else len(messages)
+        history_slice = messages[start_index:end_index]
+        chat_history = history_slice if len(history_slice) > 0 else None
 
         return cls(
             system_message=system_message,
