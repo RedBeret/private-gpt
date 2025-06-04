@@ -78,6 +78,23 @@ Stay tuned to our [releases](https://github.com/zylon-ai/private-gpt/releases) t
 Full documentation on installation, dependencies, configuration, running the server, deployment options,
 ingesting local documents, API details and UI features can be found here: https://docs.privategpt.dev/
 
+### Quick setup for WSL
+For a first time installation on a Windows Subsystem for Linux (WSL) environment you can use the provided
+`setup_wsl.sh` script. It installs all Python dependencies and downloads the models so the application can
+run completely offline:
+
+```bash
+./setup_wsl.sh
+```
+
+Once the setup has finished you can start the API and the web UI with:
+
+```bash
+./run_private_gpt.sh
+```
+
+Windows users can run the equivalent `setup_wsl.bat` and `run_private_gpt.bat` scripts.
+
 ## 🧩 Architecture
 Conceptually, PrivateGPT is an API that wraps a RAG pipeline and exposes its
 primitives.
